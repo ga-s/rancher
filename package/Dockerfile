@@ -28,8 +28,12 @@ RUN /usr/bin/unshare --version && \
     /usr/bin/nsenter --version
 
 RUN useradd rancher && \
+    groupadd jail-accessors && \
+    usermod -aG jail-accessors rancher && \
     mkdir -p /var/lib/rancher /var/lib/cattle /opt/jail /opt/drivers/management-state/bin && \
-    chown -R rancher /var/lib/rancher /var/lib/cattle /usr/local/bin
+    chgrp jail-accessors /var/lib/rancher /var/lib/cattle /usr/local/bin && \
+    chmod 750            /var/lib/rancher /var/lib/cattle /usr/local/bin && \
+    chmod g+s            /var/lib/rancher /var/lib/cattle /usr/local/bin
 
 RUN mkdir /root/.kube && \
     ln -s /etc/rancher/k3s/k3s.yaml /root/.kube/k3s.yaml  && \
@@ -54,7 +58,7 @@ ENV CATTLE_CHART_DEFAULT_BRANCH=$CHART_DEFAULT_BRANCH
 ENV CATTLE_PARTNER_CHART_DEFAULT_BRANCH=$PARTNER_CHART_DEFAULT_BRANCH
 ENV CATTLE_RKE2_CHART_DEFAULT_BRANCH=$RKE2_CHART_DEFAULT_BRANCH
 ENV CATTLE_HELM_VERSION v2.16.8-rancher2
-ENV CATTLE_MACHINE_VERSION v0.15.0-rancher116
+ENV CATTLE_MACHINE_VERSION v0.15.0-rancher118
 ENV CATTLE_K3S_VERSION v1.30.2+k3s2
 ENV CATTLE_MACHINE_PROVISION_IMAGE rancher/machine:${CATTLE_MACHINE_VERSION}
 ENV CATTLE_ETCD_VERSION v3.5.14
@@ -67,13 +71,13 @@ ENV DOCKER_MACHINE_HARVESTER_VERSION v0.6.7
 ENV CATTLE_KDM_BRANCH ${CATTLE_KDM_BRANCH}
 ENV HELM_VERSION v3.15.2
 ENV KUSTOMIZE_VERSION v5.4.2
-ENV CATTLE_WINS_AGENT_VERSION v0.4.18-rc1
+ENV CATTLE_WINS_AGENT_VERSION v0.4.19-rc.1
 ENV CATTLE_WINS_AGENT_INSTALL_SCRIPT https://raw.githubusercontent.com/rancher/wins/${CATTLE_WINS_AGENT_VERSION}/install.ps1
 ENV CATTLE_WINS_AGENT_UNINSTALL_SCRIPT https://raw.githubusercontent.com/rancher/wins/${CATTLE_WINS_AGENT_VERSION}/uninstall.ps1
 ENV CATTLE_WINS_AGENT_UPGRADE_IMAGE rancher/wins:${CATTLE_WINS_AGENT_VERSION}
 ENV CATTLE_CSI_PROXY_AGENT_VERSION v1.1.3
 # make sure the CATTLE_SYSTEM_AGENT_VERSION is consistent with tests/v2/codecoverage/package/Dockerfile
-ENV CATTLE_SYSTEM_AGENT_VERSION v0.3.9-rc.4
+ENV CATTLE_SYSTEM_AGENT_VERSION v0.3.10-rc.1
 ENV CATTLE_SYSTEM_AGENT_DOWNLOAD_PREFIX https://github.com/rancher/system-agent/releases/download
 ENV CATTLE_SYSTEM_AGENT_UPGRADE_IMAGE rancher/system-agent:${CATTLE_SYSTEM_AGENT_VERSION}-suc
 ENV CATTLE_SYSTEM_AGENT_INSTALLER_IMAGE rancher/system-agent-installer-
@@ -118,6 +122,7 @@ RUN mkdir -p /var/lib/rancher-data/local-catalogs/system-library && \
     git clone -b master --depth 1 https://github.com/rancher/charts /var/lib/rancher-data/local-catalogs/library
 
 RUN curl -sLf https://github.com/rancher/machine/releases/download/${CATTLE_MACHINE_VERSION}/rancher-machine-${ARCH}.tar.gz | tar xvzf - -C /usr/bin && \
+    chown root:root /usr/bin/rancher-machine && \
     curl -LO https://github.com/linode/docker-machine-driver-linode/releases/download/${DOCKER_MACHINE_LINODE_VERSION}/docker-machine-driver-linode_linux-amd64.zip && \
     unzip docker-machine-driver-linode_linux-amd64.zip -d /opt/drivers/management-state/bin && \
     mkdir -p /usr/share/rancher/ui/assets/ && \
@@ -147,6 +152,7 @@ ENV HELM_URL_V2_amd64=https://github.com/rancher/helm/releases/download/${CATTLE
     KUSTOMIZE_URL=https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_${ARCH}.tar.gz
 
 RUN curl -sLf ${KUSTOMIZE_URL} | tar -xzf - -C /usr/bin && \
+    chown root:root /usr/bin/kustomize && \
     chmod +x /usr/bin/kustomize
 
 # set up helm 2
@@ -159,6 +165,7 @@ RUN curl -sLf ${!HELM_URL_V2} > /usr/bin/rancher-helm && \
 # set up helm 3
 RUN curl ${HELM_URL_V3} | tar xvzf - --strip-components=1 -C /usr/bin && \
     mv /usr/bin/helm /usr/bin/helm_v3 && \
+    chown root:root /usr/bin/helm_v3 && \
     chmod +x /usr/bin/helm_v3
 
 # Set up K3s: copy the necessary binaries from the K3s image.
