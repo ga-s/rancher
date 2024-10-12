@@ -21,7 +21,6 @@ RUN zypper install -y -f docker && rpm -e --nodeps --noscripts containerd
 
 # prevents `detected dubious ownership in repository` git error due to uid/gid not matching when using bind mounts
 RUN git config -f /etc/gitconfig --add safe.directory /go/src/github.com/rancher/rancher
-RUN ln -s /scripts /go/src/github.com/rancher/rancher/
 
 RUN curl -sLf https://github.com/rancher/machine/releases/download/${CATTLE_MACHINE_VERSION}/rancher-machine-${ARCH}.tar.gz | tar xvzf - -C /usr/bin
 RUN if [ "${ARCH}" != "s390x" ]; then \
@@ -139,6 +138,7 @@ RUN if [ "${ARCH}" == "amd64" ]; then \
 VOLUME /var/lib/rancher
 VOLUME /var/lib/kubelet
 WORKDIR ${DAPPER_SOURCE}
+RUN ln -s /scripts /go/src/github.com/rancher/rancher/
 
 ENTRYPOINT ["./scripts/entry"]
 CMD ["ci"]
