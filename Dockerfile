@@ -134,11 +134,10 @@ RUN if [ "${ARCH}" == "amd64" ]; then \
         helm_v3 plugin install https://github.com/helm-unittest/helm-unittest.git --version ${HELM_UNITTEST_VERSION}; \
     fi
 
-
+COPY scripts /go/src/github.com/rancher/rancher/scripts
 VOLUME /var/lib/rancher
 VOLUME /var/lib/kubelet
 WORKDIR ${DAPPER_SOURCE}
-RUN ln -s /scripts /go/src/github.com/rancher/rancher/
 
 ENTRYPOINT ["./scripts/entry"]
 CMD ["ci"]
