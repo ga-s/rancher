@@ -135,6 +135,7 @@ RUN if [ "${ARCH}" == "amd64" ]; then \
     fi
 
 COPY scripts /go/src/github.com/rancher/rancher/scripts
+COPY test /go/src/github.com/rancher/rancher/test
 VOLUME /var/lib/rancher
 VOLUME /var/lib/kubelet
 WORKDIR ${DAPPER_SOURCE}
